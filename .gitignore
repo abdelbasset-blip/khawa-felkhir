@@ -1,0 +1,59 @@
+# ==========================================
+# Khawa Felkhir - Git Ignore Configuration
+# ==========================================
+
+# Dépendances Node.js (Backend & Frontend)
+node_modules/
+.pnp
+.pnp.js
+
+# Builds de production
+dist/
+dist-ssr/
+build/
+*.local
+
+# Variables d'environnement & Secrets (CRITIQUE pour la sécurité)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Conserver les exemples publics
+!.env.example
+
+# Logs et débogage
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Éditeurs & IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Données locales Docker & PostgreSQL
+pgdata/
+
+# Rapports de tests & Couverture de code
+coverage/
+*.lcov
+.nyc_output
+
+# Fichiers temporaires ou caches système
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+.system_generated/
+.tempmediaStorage/

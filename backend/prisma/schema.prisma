@@ -1,0 +1,170 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  MODERATOR
+}
+
+enum TypeAide {
+  alimentaire
+  medical
+  scolaire
+  vestimentaire
+  financier
+  autre
+}
+
+enum StatutBeneficiaire {
+  en_attente
+  valide
+  aide
+}
+
+enum TypeEvenement {
+  distribution_alimentaire
+  collecte_dons
+  soutien_scolaire
+  aide_medicale
+  distribution_vetements
+  evenement_religieux
+  autre
+}
+
+enum StatutEvenement {
+  brouillon
+  publie
+  termine
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  firstName    String   @default("Admin") @map("first_name")
+  lastName     String   @default("User") @map("last_name")
+  role         Role     @default(ADMIN)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Beneficiaire {
+  id                 String             @id @default(uuid())
+  nom                String
+  prenom             String
+  cin                String             @unique
+  telephone          String
+  adresse            String
+  ville              String
+  situationFamiliale String             @map("situation_familiale")
+  nbEnfants          Int                @default(0) @map("nb_enfants")
+  typeAide           TypeAide           @map("type_aide")
+  statut             StatutBeneficiaire @default(en_attente)
+  notes              String?
+  dateAjout          DateTime           @default(now()) @map("date_ajout")
+  documents          String[]           @default([])
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  @@map("beneficiaires")
+}
+
+model Evenement {
+  id              String          @id @default(uuid())
+  titre           String
+  description     String
+  type            TypeEvenement
+  dateDebut       DateTime        @map("date_debut")
+  dateFin         DateTime        @map("date_fin")
+  lieu            String
+  capaciteMax     Int?            @map("capacite_max")
+  imageCouverture String?         @map("image_couverture")
+  galerie         String[]        @default([])
+  budget          Float           @default(0)
+  statut          StatutEvenement @default(brouillon)
+  organisateurId  String?         @map("organisateur_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  inscriptions    Inscription[]
+
+  @@map("evenements")
+}
+
+// Phase 5 — Inscriptions publiques des bénévoles / participants à un événement
+model Inscription {
+  id          String    @id @default(uuid())
+  evenementId String    @map("evenement_id")
+  evenement   Evenement @relation(fields: [evenementId], references: [id], onDelete: Cascade)
+  nom         String
+  email       String
+  telephone   String?
+  message     String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@unique([evenementId, email])
+  @@map("inscriptions")
+}
+
+// Phase 5 — Messages reçus via le formulaire de contact public
+model ContactMessage {
+  id        String   @id @default(uuid())
+  nom       String
+  email     String
+  telephone String?
+  sujet     String
+  message   String
+  lu        Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("contact_messages")
+}
+
+// Paramètres de l'Association (Coordonnées, Notifications, Permissions)
+model AssociationSetting {
+  id                                String   @id @default("default")
+  nom                               String   @default("Association Khawa Felkhir")
+  sigle                             String   @default("KFK")
+  description                       String   @default("Organisation caritative citoyenne dédiée au soutien des familles démunies.")
+  matriculeFiscal                   String   @default("1489203/M/A/000") @map("matricule_fiscal")
+  rna                               String   @default("2021R04821APSF1")
+  emailContact                      String   @default("contact@khawa-felkhir.org") @map("email_contact")
+  emailNotifications                String   @default("alertes@khawa-felkhir.org") @map("email_notifications")
+  telephone                         String   @default("+216 71 890 123")
+  telephoneUrgence                  String?  @default("+216 98 123 456") @map("telephone_urgence")
+  adresse                           String   @default("12 Rue de la Solidarité, 1002 Tunis")
+  ville                             String   @default("Tunis")
+  gouvernorat                       String   @default("Tunis")
+  codePostal                        String   @default("1002") @map("code_postal")
+  siteWeb                           String   @default("https://khawa-felkhir.org") @map("site_web")
+  ribBancaire                       String   @default("TN59 1000 6035 1834 5678 9012") @map("rib_bancaire")
+  banqueNom                         String   @default("Banque Nationale de Solidarité") @map("banque_nom")
+  facebook                          String?  @default("https://facebook.com/khawafelkhir")
+  instagram                         String?  @default("https://instagram.com/khawafelkhir")
+  linkedin                          String?  @default("https://linkedin.com/company/khawa-felkhir")
+
+  // Notifications
+  notifNouvelleInscription          Boolean  @default(true) @map("notif_nouvelle_inscription")
+  notifNouveauMessage               Boolean  @default(true) @map("notif_nouveau_message")
+  notifRappelEvenement              Boolean  @default(true) @map("notif_rappel_evenement")
+  notifSeuilBeneficiaires           Boolean  @default(true) @map("notif_seuil_beneficiaires")
+  emailDigestHebdomadaire           Boolean  @default(false) @map("email_digest_hebdomadaire")
+
+  // Permissions globales modérateurs
+  moderatorCanValidateBeneficiaires Boolean  @default(true) @map("moderator_can_validate_beneficiaires")
+  moderatorCanPublishEvents         Boolean  @default(false) @map("moderator_can_publish_events")
+  moderatorCanExportData            Boolean  @default(false) @map("moderator_can_export_data")
+
+  updatedAt                         DateTime @updatedAt @map("updated_at")
+
+  @@map("association_settings")
+}
+
